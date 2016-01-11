@@ -5,14 +5,16 @@
 #
 # Copyright 2016, Malone Corp, All Rights Reserved.
 #
-from utility import *
+from util.utilities import *
+from util.globals import *
+
 from .shell import *
 
 import re
 import shlex
 import os
 import sys
-import pxssh
+import pexpect
 import getpass
 import atexit
 import inspect
@@ -90,7 +92,7 @@ class shell:
             
         if self.local:
             # Run it locallyinport             if getOpt('VERBOSE') and pcommand:
-                log(cmd)
+            log(cmd)
                 
             stream = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         else:
@@ -159,7 +161,7 @@ class shell:
             
         if self.local:
             # Run it locallyinport             if getOpt('VERBOSE') and pcommand:
-                log(cmd)
+            log(cmd)
                 
             stream = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         else:
