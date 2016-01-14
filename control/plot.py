@@ -1,97 +1,86 @@
+#!/usr/local/bin/python3.5
+
 #
-# Copyright 2015-2015, Q Factor Communications, All Rights Reserved
+# Copyright 2016, Dan Malone, All Rights Reserved
 #
+from util import *
+from .shell import *
+
 import time
 import os
 import re
 import pprint
 
+local_shell = shell("local")
+
+###################################################################################################
+#
+# MODULE (Class): gnuplot
+#
+# DESCRIPTION   : This class manages data plotting using gnuplot of various data etc.
+#
+# AUTHOR        : Dan Malone
+#
+# CREATED       : 01/13/16
+#
+##################################################################################################
 class gnuplot:
 
+    ##############################################################################################
+    #
+    # METHOD: __init__(testbed_objects)
+    #
+    # DESCRIPTION: This is the initialization constructor:
+    #                  testbed_objects  - testbed objects as specified/required
+    #
+    ##############################################################################################
     def __init__(self, testbed_objects):
-        self.plot_commands ='set term png font "calibri,10" size 640,480\n' \
-        
+        """__init__(testbed_objects)
+              This is the initialization constructor:
+                  testbed_objects  - testbed objects as specified/required
+                  """
+
+        # set up the basic gnuplot reqs and pull only the necessary objects
+        self.plot_commands ='set term png font "calibri,10" size 640,480\n'
         self.client = testbed_objects['CLIENT_DEVICE']
         self.transfer_device = testbed_objects['TRANSFER_DEVICE']
     
-    def genchart(self, title, x_axis_label, y_axis_label, plotlines):
-
-        path = self.transfer_device.options["REPORT_PATH"]
-        pngfile = str(int(time.time())) + "-gput-"+ x_axis_label.replace(" ", "-") +".png"
-        outfile = path + pngfile
-
-        self.plot_commands += 'set output "'+ outfile +'"\n' \
-                             'set title "'+ title +'"\n' \
-                             'set xlabel "'+ x_axis_label +'"\n' \
-                             'set ylabel "'+ y_axis_label +'"\n'
-        i=0
-        plotlines_info = []
-        for k,v in plotlines.items():
-            if v:
-                datafile = "profile" + str(i) + ".dat"
-                line_title = k
-                profile = ""
-                for key,val in sorted(v.items()):
-                    profile_list = []
-                    profile_list.append(str(key))
-                    total_throughput = 0.0
-                    running_avg_throughput = 0.0
-                    j=1
-                    min_throughput = 0.0
-                    max_throughput = 0.0
-                    for throughput in val:
-                        if min_throughput == 0.0 and max_throughput == 0.0:
-                            min_throughput = max_throughput = throughput
-                        elif min_throughput > throughput:
-                            min_throughput = throughput
-                        elif max_throughput < throughput:
-                            max_throughput = throughput
-
-                        total_throughput += throughput
-                        running_avg_throughput = total_throughput / j
-
-                        j+=1
-
-                    profile_list.append(str(running_avg_throughput*8/1000000))
-                    profile_list.append(str(min_throughput*8/1000000))
-                    profile_list.append(str(max_throughput*8/1000000))
-
-                    profile += " ".join(profile_list) + "\n"
-                
-                self.client.shell.run("echo '" + profile + "'" + " > " + self.transfer_device.options["REPORT_PATH"] + datafile)
-
-                plotlines_info.append('"' + self.transfer_device.options["REPORT_PATH"] + datafile +'" u 1:2 w l lw 2 t "' + line_title + '"')
-                plotlines_info.append('"" u 1:2:3:4 w errorbar t ""')
-
-                i+= 1
-
-        plotlines_info_cmd = 'plot ' + ",".join(plotlines_info) + '\n'
-        self.plot_commands += plotlines_info_cmd
-
-        filename = title.replace(" ", "-") + "_" + str(int(time.time()))+".gp"
-	
-        self.client.shell.run("echo '" + self.plot_commands + "'" + " > " + self.transfer_device.options["REPORT_PATH"] + filename)
-        self.client.shell.run("gnuplot " + self.transfer_device.options["REPORT_PATH"] + filename)
-
-        return pngfile
-
     # ############################################################
     #
     # Method: generic_tplot()
     #
     # Description: Time based (XAxis) plot utility that will allow 1..n
-    #   line plotting of time based data points. Note: the format of the 
-    #   plotfile data line must be "<time-index> <value>" as this is a 
-    #   simple generic plot tool.
+    #              line plotting of time based data points. Note: the format of the 
+    #              plotfile data line must be "<time-index> <value>" as this is a 
+    #              simple generic plot tool.
     #
-    #   Plot file names must (for now) have the extension ".txt" and should
-    #   named appropriately as the titel will be used as a lable for the
-    #   plotline.
+    #              Plot file names must (for now) have the extension ".txt" and should
+    #              named appropriately as the titel will be used as a lable for the
+    #              plotline.
     #
-    #   graph_data is a simple python list of plot file names allowing any
-    #   number of plots to be pushed to this method.
+    #              graph_data is a simple python list of plot file names allowing any
+    #              number of plots to be pushed to this method.
     #
+    #              Appending "DOT" as part of the .txt filename (ex: mygraphDOT.txt) will
+    #              force the graph mechanism to use dot plotting otherwise line format
+    #              is the default.
+    #
+    # ############################################################
     def generic_tplot(self, dprc, title, x_axis_label, y_axis_label, path, graph_data=[], ymax=0):
+        """generic_tplot():
+              Time based (XAxis) plot utility that will allow 1..n
+                 line plotting of time based data points. Note: the format of the 
+                 plotfile data line must be "<time-index> <value>" as this is a 
+                 simple generic plot tool.
+              Plot file names must (for now) have the extension ".txt" and should
+                 named appropriately as the titel will be used as a lable for the
+                 plotline.
+              graph_data is a simple python list of plot file names allowing any
+                 number of plots to be pushed to this method.
+                 Appending "DOT" as part of the .txt filename (ex: mygraphDOT.txt) will
+                 force the graph mechanism to use dot plotting otherwise line format
+                 is the default.
+                 """
 
         # create the gp filename
         build = re.match(r'(.*):\w+.*', title)
@@ -100,6 +89,7 @@ class gnuplot:
             label = re.match(r'.*:(.*)', title)
         filename = label.group(1).replace(" ", "-") + "_" + str(int(time.time()))+".gp"
 
+        # start building the plot commands
         self.plot_commands = 'set term png font "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf,10" size 640,480\n' \
                              'set key top\n'
 
@@ -107,6 +97,7 @@ class gnuplot:
         pngfile = str(int(time.time())) + "-gput-"+ x_axis_label.replace(" ", "-") +".png"
         outfile = path + "/" + pngfile
 
+        # if no ymax passed in use deafult of 60 (no reason why)
         if ymax == 0:
             ymax = 60
 
@@ -125,18 +116,23 @@ class gnuplot:
         for idx in range(0, len(graph_data)):
             plot_file = graph_data[idx]
             plot_title = str(plot_file).strip(".txt")
+            
+            # add some flexibility (NOTE_TO_SELF: This can be done better))
             if "DOT" in plot_title:
+                # plot using dot format
                 plot_title = str(plot_file).strip("DOT.txt")
 
                 self.plot_commands = plot_command_init
                 plotlines_info.append('"' + path + str(plot_file) +'" u 1:2 w p pt 1 t "' + plot_title + '"')
 
             else:
+                # default to line format
                 plotlines_info.append('"' + path + str(plot_file) +'" u 1:2 w l lw 2 t "' + plot_title + '"')
 
         plotlines_info_cmd = 'plot ' + ",".join(plotlines_info) + '\n'
         self.plot_commands += plotlines_info_cmd
 
+        # run the plot
         dprc.shell.run("echo '" + self.plot_commands + "'" + " > " + path + filename)
         dprc.shell.run("gnuplot " + path + filename)
 
@@ -187,12 +183,24 @@ class gnuplot:
     #
     # space or tab deliniated.
     #
+    # ############################################################
     def g_plot(self, cobj, title, path, x_axis_label, y_axis_label=[], graph_data1=[], plot_type="DEFAULT", graph_data2=[], y_axis_max=0):
+        """g_plot()
+              This is a somewhat generic plot utility that will allow
+              multiple types of plot scenarios and plot poimt types. The currently supported
+              plot scenarios are:
+                 DEFAULT    - Single X/Y Axies
+                 MULTIYAXIS - Dual Y Axies left side/right side appropriately scaled
+                 MULTIPLOT  - Single x/y Aixies, plot within the main plot
+              (see method header for more detailed description)
+        """
 
         # create the gp filename
         filename = title.replace(" ", "-") + "_" + str(int(time.time()))+".gp"
 
+        # check plot type
         if plot_type != "MULTIPLOT":
+            # single plot
             self.plot_commands = 'set term png font "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf,10" size 1200,800\n' \
                                  'set key top\n'
 

@@ -4,10 +4,10 @@
         <name>unix</name>
         <description>Test Bed 1 is for the machines assigned to Quentin in the lab, with all the unix machines</description>
         <test_server id="1">
-            <ip>192.168.19.201</ip>
+            <ip>192.168.0.114</ip>
         </test_server>
         <control_server id="1">
-            <ip>172.16.0.119</ip>
+            <ip>192.168.0.104</ip>
         </control_server>
         <dns_server id="2">
             <ip>192.168.20.69</ip>
@@ -18,11 +18,8 @@
         <netem_server id="1">
 	    <!-- Method 1 = WANEM method, 2 = newer kernel method -->
 	    <method>2</method>
-            <ip>192.168.17.209</ip>
+            <ip>192.168.0.104</ip>
             <interface id="1">
-                <name>eth0</name>
-            </interface>
-            <interface id="2">
                 <name>eth1</name>
             </interface>
         </netem_server>
@@ -52,98 +49,4 @@
 	</capture>
     </test_bed>
     
-<!--
-    <test_bed id="2">
-        <name>unix</name>
-        <description>Test Bed 1 is for the machines assigned to Ed in the lab, with all the Android machines</description>
-        <dpr_server id="1">
-            <ip>192.168.19.201</ip>
-        </dpr_server>
-        <dns_server id="2">
-            <ip>192.168.20.69</ip>
-        </dns_server>
-        <content_server id="1">
-            <ip>192.168.17.205</ip>
-        </content_server>
-        <netem_server id="1">
-            <ip>192.168.17.209</ip>
-            <interface id="1">
-                <name>eth0</name>
-            </interface>
-            <interface id="2">
-                <name>eth1</name>
-            </interface>
-        </netem_server>
-        <dpr_client id="1">
-            <ip>192.168.10.205</ip>
-            <os>linux</os>
-        </dpr_client>
-        <dpr_client id="2">
-            <ip>192.168.10.216</ip>
-            <os>osx</os>
-        </dpr_client>
-    </test_bed>    
-    
-    <test_bed id="3">
-        <name>unix</name>
-        <description>Test Bed 1 is for the machines assigned to Jon in the lab, with all the IOS machines</description>
-        <dpr_server id="1">
-            <ip>192.168.19.201</ip>
-        </dpr_server>
-        <dns_server id="2">
-            <ip>192.168.20.69</ip>
-        </dns_server>
-        <content_server id="1">
-            <ip>192.168.17.205</ip>
-        </content_server>
-        <netem_server id="1">
-            <ip>192.168.17.209</ip>
-            <interface id="1">
-                <name>eth0</name>
-            </interface>
-            <interface id="2">
-                <name>eth1</name>
-            </interface>
-        </netem_server>
-        <dpr_client id="1">
-            <ip>192.168.10.205</ip>
-            <os>linux</os>
-        </dpr_client>
-        <dpr_client id="2">
-            <ip>192.168.10.216</ip>
-            <os>osx</os>
-        </dpr_client>
-    </test_bed>
-    
-    <test_bed id="4">
-        <name>unix</name>
-        <description>Test Bed 1 is for the machines assigned to Lee in the lab, with all the mixed machines</description>
-        <dpr_server id="1">
-            <ip>192.168.19.201</ip>
-        </dpr_server>
-        <dns_server id="2">
-            <ip>192.168.20.69</ip>
-        </dns_server>
-        <content_server id="1">
-            <ip>192.168.17.205</ip>
-        </content_server>
-        <netem_server id="1">
-            <ip>192.168.17.209</ip>
-            <interface id="1">
-                <name>eth0</name>
-            </interface>
-            <interface id="2">
-                <name>eth1</name>
-            </interface>
-        </netem_server>
-        <dpr_client id="1">
-            <ip>192.168.10.205</ip>
-            <os>linux</os>
-        </dpr_client>
-        <dpr_client id="2">
-            <ip>192.168.10.216</ip>
-            <os>osx</os>
-        </dpr_client>
-    </test_bed>
--->
 </qsilver_automation_config>

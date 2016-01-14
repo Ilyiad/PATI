@@ -1,5 +1,8 @@
 #!/usr/bin/python3
+import sys
+
 from control import organizer
+from control.transfer import *
 from util.globals import getOpt
 from control.test_server import *
 from control.test_client_linux import *
@@ -16,7 +19,6 @@ from control.netem import *
 # }
 #
 ################################################################
-
 def testinit(profiles=['']):
     
     # Get the information out of the testbed file
@@ -76,28 +78,27 @@ def testinit(profiles=['']):
         log("Skipping clearing of netem due to DEBUG == 1")
     else:
         # Clear out any netem cruft on the systems in the testbed
-        server_object.clear_netem()
+        test_server_object.clear_netem()
         netem_object.clear_netem()
         if client_name == "Linux":
             client_object.clear_netem()
 
     if client_name == "Linux":
-        log( "TestClient(" + client_object.data_ip + ") ==> Test Server(" + server_object.data_ip + ")")
+        log( "TestClient(" + client_object.data_ip + ") ==> Test Server(" + test_server_object.data_ip + ")")
         # Test the interfaces
-        ping_test(client_object, server_object)
+        ping_test(client_object, test_server_object)
     else:
-        log("Device Client(" + client_device_object.client_name + ") ==> Test Server(" + server_object.data_ip + ")")
+        log("Device Client(" + client_device_object.client_name + ") ==> Test Server(" + test_server_object.data_ip + ")")
 
     if getOpt('INSTALL'):
         # Install the server and client software
-        oschk = server_object.run("lsb_release -a", perror=0) 
+        oschk = test_server_object.run("lsb_release -a", perror=0) 
         if getOpt('OS') and getOpt('OS') == "centos" and oschk == "CentOS":
-            server_object.install(getOpt('BUILD'), getOpt('OS'))
+            test_server_object.install(getOpt('BUILD'), getOpt('OS'))
         else:            
-            server_object.install(getOpt('BUILD'))
+            test_server_object.install(getOpt('BUILD'))
         log("CLIENT NAME : " +str(client_name))
         if client_name == "Linux":
-#        if client_name == "Linux" or client_name=="LINUX":
             client_object.install(getOpt('BUILD'))
 
         # the way we run tests from py.test this carries
@@ -106,7 +107,7 @@ def testinit(profiles=['']):
         setOpt('INSTALL', "0")
 
     # Start the server if it is not already running
-    server_object.start()
+    #test_server_object.start()
 
     if client_name == "Linux":
         # Create a file transfer object for linux client
@@ -117,7 +118,7 @@ def testinit(profiles=['']):
         client_object.set_default_config()
     else:
         # Create a file transfer object for devices
-        transfer_device_object = transfer_device(client_device_object, server_object)
+        transfer_device_object = transfer_device(client_device_object, test_server_object)
         transfer_object = None
 
     # Set up the report
@@ -132,7 +133,7 @@ def testinit(profiles=['']):
     objects = {}
     objects['CLIENT']        = client_object
     objects['CLIENT_DEVICE'] = client_device_object
-    objects['SERVER']        = server_object
+    objects['SERVER']        = test_server_object
     objects['NETEM']         = netem_object
     objects['TRANSFER']      = transfer_object
     objects['TRANSFER_DEVICE']  = transfer_device_object
@@ -187,6 +188,7 @@ def testfinish(objects):
 #                        testinstall()
 # 
 ################################
+"""
 def testinit_slave(client_id=1, server_id=1, netem_id=1, content_id=1):
     
     # Get the information out of the testbed file
@@ -300,6 +302,25 @@ def testinit_slave(client_id=1, server_id=1, netem_id=1, content_id=1):
     atexit.register(testfinish, objects)
     
     return objects
+"""
+
+##########################################################
+# system_cleanup
+#   simple method to provide cleanup
+##########################################################
+def ping_test(cobj, sobj) :
+
+    ping_str = "ping -c 1 " +cobj.control_ip
+    log(ping_str)
+    result = os.system(ping_str)
+    if result == True:
+        sys.exit("CLIENT PING FAILEDD")
+
+    ping_str = "ping -c 1 " +sobj.control_ip
+    log(ping_str)
+    result = os.system(ping_str)
+    if result == True:
+        sys.exit("SERVER PING FAILED")
 
 ##########################################################
 # system_cleanup

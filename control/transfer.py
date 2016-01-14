@@ -3,8 +3,8 @@
 #
 # Copyright 2016, Dan Malone, All Rights Reserved
 #
-import utility.utilities
-from utility.globals import *
+import util.utilities
+from util.globals import *
 
 import re
 import shlex
