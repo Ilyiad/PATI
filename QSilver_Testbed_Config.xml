@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<qsilver_automation_config>
+    <test_bed id="1">
+        <name>unix</name>
+        <description>Test Bed 1 is for the machines assigned to Quentin in the lab, with all the unix machines</description>
+        <test_server id="1">
+            <ip>192.168.19.201</ip>
+        </test_server>
+        <control_server id="1">
+            <ip>172.16.0.119</ip>
+        </control_server>
+        <dns_server id="2">
+            <ip>192.168.20.69</ip>
+        </dns_server>
+        <content_server id="1">
+            <ip>192.168.17.205</ip>
+        </content_server>
+        <netem_server id="1">
+	    <!-- Method 1 = WANEM method, 2 = newer kernel method -->
+	    <method>2</method>
+            <ip>192.168.17.209</ip>
+            <interface id="1">
+                <name>eth0</name>
+            </interface>
+            <interface id="2">
+                <name>eth1</name>
+            </interface>
+        </netem_server>
+        <test_client id="1">
+            <ip>192.168.10.120</ip>
+            <os>linux</os>
+        </test_client>
+	<control_client id="1">
+            <ip>192.168.0.108</ip>
+            <os>linux</os>
+	    <path>/home/projects/PATI</path>
+        </control_client>
+	<control_client id="2">
+            <ip>192.168.13.207</ip>
+            <os>linux</os>
+            <qtest_dir>/var/www/QTest_Base</qtest_dir>
+        </control_client>
+        <username id="1">
+            <name>qfactor</name>
+        </username>
+        <root_username id="1">
+            <name>root</name>
+        </root_username>
+	<capture id="1">
+	    <!-- <dpr>0</dpr> -->
+	    <tcp>0</tcp>
+	</capture>
+    </test_bed>
+    
+<!--
+    <test_bed id="2">
+        <name>unix</name>
+        <description>Test Bed 1 is for the machines assigned to Ed in the lab, with all the Android machines</description>
+        <dpr_server id="1">
+            <ip>192.168.19.201</ip>
+        </dpr_server>
+        <dns_server id="2">
+            <ip>192.168.20.69</ip>
+        </dns_server>
+        <content_server id="1">
+            <ip>192.168.17.205</ip>
+        </content_server>
+        <netem_server id="1">
+            <ip>192.168.17.209</ip>
+            <interface id="1">
+                <name>eth0</name>
+            </interface>
+            <interface id="2">
+                <name>eth1</name>
+            </interface>
+        </netem_server>
+        <dpr_client id="1">
+            <ip>192.168.10.205</ip>
+            <os>linux</os>
+        </dpr_client>
+        <dpr_client id="2">
+            <ip>192.168.10.216</ip>
+            <os>osx</os>
+        </dpr_client>
+    </test_bed>    
+    
+    <test_bed id="3">
+        <name>unix</name>
+        <description>Test Bed 1 is for the machines assigned to Jon in the lab, with all the IOS machines</description>
+        <dpr_server id="1">
+            <ip>192.168.19.201</ip>
+        </dpr_server>
+        <dns_server id="2">
+            <ip>192.168.20.69</ip>
+        </dns_server>
+        <content_server id="1">
+            <ip>192.168.17.205</ip>
+        </content_server>
+        <netem_server id="1">
+            <ip>192.168.17.209</ip>
+            <interface id="1">
+                <name>eth0</name>
+            </interface>
+            <interface id="2">
+                <name>eth1</name>
+            </interface>
+        </netem_server>
+        <dpr_client id="1">
+            <ip>192.168.10.205</ip>
+            <os>linux</os>
+        </dpr_client>
+        <dpr_client id="2">
+            <ip>192.168.10.216</ip>
+            <os>osx</os>
+        </dpr_client>
+    </test_bed>
+    
+    <test_bed id="4">
+        <name>unix</name>
+        <description>Test Bed 1 is for the machines assigned to Lee in the lab, with all the mixed machines</description>
+        <dpr_server id="1">
+            <ip>192.168.19.201</ip>
+        </dpr_server>
+        <dns_server id="2">
+            <ip>192.168.20.69</ip>
+        </dns_server>
+        <content_server id="1">
+            <ip>192.168.17.205</ip>
+        </content_server>
+        <netem_server id="1">
+            <ip>192.168.17.209</ip>
+            <interface id="1">
+                <name>eth0</name>
+            </interface>
+            <interface id="2">
+                <name>eth1</name>
+            </interface>
+        </netem_server>
+        <dpr_client id="1">
+            <ip>192.168.10.205</ip>
+            <os>linux</os>
+        </dpr_client>
+        <dpr_client id="2">
+            <ip>192.168.10.216</ip>
+            <os>osx</os>
+        </dpr_client>
+    </test_bed>
+-->
+</qsilver_automation_config>
