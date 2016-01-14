@@ -3,6 +3,7 @@ from control import organizer
 from util.globals import getOpt
 from control.test_server import *
 from control.test_client_linux import *
+from control.netem import *
 
 # A dictionary is returned of the form:
 # {
@@ -46,7 +47,7 @@ def testinit(profiles=['']):
         client_device_object = testclient_device(testbed_object, 1, 1, 1)
 
     # Create a netem object so we can control the netem system
-    netem_object = netem(testbed_object, 1, 1)
+    netem_object = netem.netem(testbed_object, 1, 1)
     
     # See if they are running only some of the profiles
     if profiles != ['']:
@@ -216,7 +217,7 @@ def testinit_slave(client_id=1, server_id=1, netem_id=1, content_id=1):
         client_device_object = test_client_device(testbed_object, client_id, server_id, 1)
 
     # Create a netem object so we can control the netem system
-    netem_object = netem(testbed_object, netem_id, 1)
+    netem_object = netem.netem(testbed_object, netem_id, 1)
             
     if getOpt('DEBUG'):
         log("Skipping clearing of netem due to DEBUG == 1")

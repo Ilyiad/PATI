@@ -63,10 +63,23 @@ from subprocess import Popen, PIPE, call
 class shell:
 
     # #############################################################################################
-    # constructor(ip, user)
-    # If ip is "local", user may be omitted or ""
+    #
+    # METHOD: __init__()(ip, user)
+    #
+    # DESCRIPTION: This is the initialization constructor:
+    #                 ip - ip address of the remote
+    #                 user - login user (ex: root | <userid>)
+    #              If ip is "local", user may be omitted or ""
+    #
     # #############################################################################################
     def __init__(self, ip, user="root"):
+        """__init__()(ip, user):
+           This is the initialization constructor:
+              ip   - ip address of the remote
+              user - login user (ex: root | <userid>)
+           If ip is "local", user may be omitted or ""
+           """
+
         self.launched_cmds = {}
         self.ip = ip
         self.user = user
@@ -76,34 +89,47 @@ class shell:
             self.local=0
             
     ##############################################################################################
-    # run(command)
-    # Run a command locally or remotely and wait for completion. NOTE: For remote accesses this can
-    # ONLY be used if the remote is set up for passwordless SSH connections.
     #
-    # If perror       is 0, the error will not be printed if the command fails
-    # If redirect_err is 1, the output will be redirected (>2) and that stderr will be appended to the output
-    #    This is need for some commands like curl that seem to use stderr as normal output.
+    # METHOD: run(command)
+    #
+    # DESCRIPTION: Run a command locally or remotely and wait for completion. NOTE: For remote accesses this can
+    #              ONLY be used if the remote is set up for passwordless SSH connections.
+    #                 cmd          - command to be run in the shell
+    #                 perror       - If perror is 0, the error will not be printed if the command fails
+    #                 redirect_err - If redirect_err is 1, the output will be redirected (>2) and that stderr will be appended to the output
+    #                                This is needed for some commands like curl that seem to use stderr as normal output.
+    #                 decode       - If 1 then UTF-8 decode will be applied to the read data
+    #                 pcommand     - Add command to the output
+    #
     ##############################################################################################
     def run(self, cmd, perror=1, redirect_err=0, decode=1, pcommand=1):
+        """run(command):
+           Run a command locally or remotely and wait for completion. NOTE: For remote accesses this can
+           ONLY be used if the remote is set up for passwordless SSH connections.
+              perror       - If perror is 0, the error will not be printed if the command fails
+              redirect_err - If redirect_err is 1, the output will be redirected (2>&1) and that stderr will be appended to the output
+                             This is needed for some commands like curl that seem to use stderr as normal output.
+              """
 
-        if redirect_err:
-            # Make the err be part of the output
-            cmd = cmd
-            
+        # Check if local
         if self.local:
-            # Run it locallyinport             if getOpt('VERBOSE') and pcommand:
-            log(cmd)
-                
+            # Run it locally             
+            if getOpt('VERBOSE') and pcommand:
+                log(cmd)
             stream = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         else:
-            if pcommand:
-                if getOpt('VERBOSE'):
-                    log('ssh ' + self.user + '@'+ self.ip + " "+ cmd)
+            # Run as remote
 
+            # if we have pcommand and verboise is set
+            if pcommand and getOpt('VERBOSE'):
+                log('ssh ' + self.user + '@'+ self.ip + " "+ cmd)
+
+            # check for root user otherwise there are commands that must be run differently to work non-root
             if self.user == "root":
                 stream = Popen(['ssh', self.user +'@' + self.ip, cmd], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             else:
-                # sadly, as non-root certain commands have certain complaints if not handled correctly.. neeed to do this better
+                # sadly, as non-root certain commands have certain complaints if not handled correctly.. 
+                # NOTE_TO_SELF: need to do this better.. investigate later good for now
                 if "grep" in cmd or "service" in cmd or "sed" in cmd or "ps" in cmd or "pkill" in cmd or ("ps -e" in cmd and "cd" in cmd):
                     newcmd = "sudo " +cmd
                 elif "cd" in cmd or "bash" in cmd or "curl" in cmd or "ls" in cmd or ("if" in cmd and "tc" in cmd) or "if" in cmd or "exit" in cmd or "tcpdump" in cmd:
@@ -119,6 +145,7 @@ class shell:
         # Wait for completion (this is a "run", not a "launch")
         stream.wait()
         if decode:
+            # decode using utf-8
             out = stream.stdout.read().decode('utf-8')
             err = stream.stderr.read().decode('utf-8')
         else:
@@ -131,7 +158,7 @@ class shell:
             err = ""
             
         if err != "" and perror:
-            # Ruh roh, print out the error
+            # Ruh roh, this is not good.. print out the error
             if self.local:
                 msg=cmd
             else:
@@ -147,17 +174,29 @@ class shell:
             return out
 
     ##############################################################################################
-    # run_wpasswd(command)
-    # Run a command locally or remotely and wait for completion
-    # If perror       is 0, the error will not be printed if the command fails
-    # If redirect_err is 1, the output will be redirected (>2) and that stderr will be appended to the output
-    #    This is need for some commands like curl that seem to use stderr as normal output.
+    #
+    # METHOD: run_wpasswd(command)
+    #
+    # DESCRIPTION: Run a command locally or remotely and wait for completion. NOTE: For remote accesses this can
+    #              ONLY be used if the remote is set up for passwordless SSH connections. This command requires
+    #              a password to connect to the specified user for the case where passwordless connections are 
+    #              frowned upon or not allowed.
+    #
+    # NOTE_TO_SELF: UNDER CONSTRUCTION - not sure where the passwd will be stored as anywhere on the machine is still
+    #               a security risk. To not make it part of the code it will be pulled from the root_user section
+    #               in the config .xml. This is still under construction as I have to think about the send-expect
+    #               schema.
+    #
+    #                 cmd          - command to be run in the shell
+    #                 perror       - If perror is 0, the error will not be printed if the command fails
+    #                 redirect_err - If redirect_err is 1, the output will be redirected (>2) and that stderr will be appended to the output
+    #                                This is needed for some commands like curl that seem to use stderr as normal output.
+    #                 decode       - If 1 then UTF-8 decode will be applied to the read data
+    #                 pcommand     - Add command to the output
+    #
     ##############################################################################################
     def run_wpasswd(self, cmd, perror=1, redirect_err=0, decode=1, pcommand=1):
 
-        if redirect_err:
-            # Make the err be part of the output
-            cmd = cmd
             
         if self.local:
             # Run it locallyinport             if getOpt('VERBOSE') and pcommand:
@@ -185,6 +224,7 @@ class shell:
                 print("pxssh failed on login.")
                 print(e)
 
+# NOTE_TO_SELF: This needs work
 #            if pcommand:
 #                if getOpt('VERBOSE'):
 #                    log('ssh ' + self.user + '@'+ self.ip + " "+ cmd)
@@ -236,24 +276,43 @@ class shell:
 #            return out
                 
     # #############################################################################################
-    # launch(command)
-    # Run a program locally or remotely and don't wait for completion
-    # Return a stream which may be passed to launch.pid(stream) and launch.stop(stream)
-    # If no_check is 1, it means launch and return.  Don't check for pid
+    #
+    # METHOD: launch(command)
+    #
+    # DESCRIPTION: Run a program locally or remotely as a thread and don't wait for completion
+    #                 cmd       - cmd to be executed as a thread
+    #                 no_check  - If no_check is 1 then launch and return do not check the PID
+    #                 no_atexit - 
+    #                 redirect  - If redirect_err is 1, the output will be redirected (>2) and that 
+    #                             stderr will be appended to the output This is needed for some commands 
+    #                             like curl that seem to use stderr as normal output.
+    #
+    #              Return a stream which may be passed to launch.pid(stream) and launch.stop(stream)
     # 
-    # Change: 02/11/15 - DRML: Need to propagate the redirect_err so if it is set we properly
-    #                        pass that through to where it affects the outcome.
     # #############################################################################################
     def launch(self, cmd, no_check=0, no_atexit=0, redirect_err=0):
+        """launch(command):
+           Run a program locally or remotely as a thread and don't wait for completion
+              cmd       - cmd to be executed as a thread
+              no_check  - launch and return do not check the PID
+              no_atexit - If set to 1 does not register an atexit()
+              redirect  - If redirect_err is 1, the output will be redirected (>2) and that 
+                          stderr will be appended to the output This is needed for some commands 
+                          like curl that seem to use stderr as normal output.
+           Return a stream which may be passed to launch.pid(stream) and launch.stop(stream)
+              """
 
+        # check for a local
         if self.local:
             # Run it locally
             stream = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         else:
+            # run remote if root just go with it
             if self.user == "root":
                 stream = Popen(['ssh', self.user +'@' + self.ip, cmd], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             else:
-                # sadly, as non-root certain commands have certain complaints if not handled correctly.. need to do this better
+                # sadly, as non-root certain commands have certain complaints if not handled correctly.. 
+                # NOTE_TO_SELF need to do this better.. okay for now.. revisit
                 if "grep" in cmd or "service" in cmd or "sed" in cmd or "ps" in cmd or "pkill" in cmd or ("ps -e" in cmd and "cd" in cmd):
                     newcmd = "sudo " +cmd
                 elif "cd" in cmd or "bash" in cmd or "curl" in cmd or "ls" in cmd or ("if" in cmd and "tc" in cmd) or "if" in cmd or "exit" in cmd:
@@ -267,11 +326,13 @@ class shell:
                 stream = Popen(['ssh', self.user +'@' + self.ip, cmd], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
         if no_check == 1:
+            # this is a no check return immediate
             return stream
         
         # Keep track of the streams that we have launched and the corresponding command
         self.launched_cmds[stream] = cmd
 
+        # do we register an atexit ?
         if no_atexit == 0:
             # If script bombs or ctrl-c's, make sure we kill the local or remote process that got launched
             atexit.register(self.stop, stream)
@@ -309,17 +370,34 @@ class shell:
         
 
     # #############################################################################################
-    # pid(stream)
-    # Get the pid of the launched program (for remote, the remote program, NOT the local ssh that ran it)
-    # In a multi-client environment we have to grep the PID so be careful here
     #
-    # Change: 02/11/15 - DRML: Need to propagate the redirect_err so if it is set we properly
-    #                        pass that through to where it affects the outcome.
+    # MODULE: pid(stream)
+    #
+    # DESCRIPTION: Get the pid of the launched program (for remote, the remote program, NOT the local ssh
+    #              that ran it) In a multi-client environment we have to grep the PID so be careful here
+    #
+    #                 stream       - original stream identifier from the launch
+    #                 pid          - PID for the process created
+    #                 redirect_err - If redirect_err is 1, the output will be redirected (>2) and that stderr will be appended to the output
+    #                                This is needed for some commands like curl that seem to use stderr as normal output.
+    #
     # #############################################################################################
     def pid(self, stream, pid=0, redirect_err=0):
+        """pid(stream):
+           Get the pid of the launched program (for remote, the remote program, NOT the local ssh
+           that ran it) In a multi-client environment we have to grep the PID so be careful here
+              stream       - original stream identifier from the launch
+              pid          - PID for the process created
+              redirect_err - If redirect_err is 1, the output will be redirected (>2) and that stderr will be appended to the output
+                             This is needed for some commands like curl that seem to use stderr as normal output.
+                             """
+
+        # retrieve the command from the pushed command stream
         cmd = self.launched_cmds[stream]
+        
+        # if local run direct
         if not self.local:
-            # cannot assume single stream if the pid is passed then check for the specific pid
+            # cannot assume single stream if the pid is passed so check for the specific pid
             if pid:
                 pid = self.run('ps -e o pid,args | grep "' + cmd + '" | grep -v -e grep -e ssh | grep '+ str(pid))
             else:
@@ -346,14 +424,25 @@ class shell:
         return pid
 
     ##############################################################################################
-    # stop(stream, proxyport)
-    # Stop the remote or local launched program and terminate the Popen stream if it hasn't been stopped already
-    # This is ALWAYS called from atexit for cleanup so we have to check it if has already been terminated
     #
-    # The final output from the program is returned
+    # METHOD: stop(stream, proxyport)
+    #
+    # DESCRIPTION: Stop the remote or local launched program and terminate the Popen stream if it 
+    #              hasn't been stopped already This is ALWAYS called from atexit for cleanup so we 
+    #              have to check it if has already been terminated
+    #
+    #              The final output from the program is returned
+    #
     ##############################################################################################
     def stop(self, stream, proxyport=""):
+        """ stop(stream, proxyport)
+            Stop the remote or local launched program and terminate the Popen stream if it hasn't been stopped already
+            This is ALWAYS called from atexit for cleanup so we have to check it if has already been terminated
+            The final output from the program is returned
+            """
+
         trace_enter()
+        # make sure we are a valid stream
         if stream in self.launched_cmds:
 
             # If atexit called this method, print cleanup message to remind user they should cleanup themselves
@@ -362,7 +451,9 @@ class shell:
                 call_frame = inspect.getouterframes(inspect.currentframe(), 2)
                 log("TRACE      : " + self.__class__.__name__ + "." + call_frame[0][3] + "(): " + msg)
                 
+            # check if we are running as local
             if not self.local:
+                # nope.. proccess as a remote.. get the PID
                 pid = self.pid(stream, str(proxyport))
                 if pid != "":
                     # Using pkill -P kills the process and all of it's children (in case a script was launched which started other programs)
@@ -413,12 +504,26 @@ class shell:
         trace_exit()
                            
     # #############################################################################################
-    # get_file(file)
-    # Retrive a file from the remote system using scp.  The file will be placed in the local directory
+    #
+    # METHOD: get_file(file)
+    #
+    # DESCRIPTION: Retrive a file from the remote system using scp.  The file will be placed in the 
+    #              local directory
+    #
+    #                 file - the filename to be rertrieved
+    #
     # #############################################################################################
     def get_file(self, file):
+        """get_file(file):
+           Retrive a file from the remote system using scp.  The file will be placed in the 
+           local directory
+              file - the filename to beretrieved
+              """
+
+        # see if we are local
         if not self.local:
             
+            # process as remote
             if getOpt('VERBOSE'):
                 log("Retrieving " + self.ip + ":" + file)
 
@@ -428,6 +533,7 @@ class shell:
                 run=Popen(['scp', self.user + '@' + self.ip + ":" + file, '.'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             run.wait()
             
+            # for now decode as utf-8.. this may change
             out = run.stdout.read().decode('utf-8')
             err = run.stderr.read().decode('utf-8')
             if err != "":
@@ -441,21 +547,36 @@ class shell:
 
             
     # #############################################################################################
-    # put_file(file, dest_path)
-    # Send a local file to the remote system using scp.  The file will be places in the specified destination path
+    #
+    # METHOD: put_file(file, dest_path)
+    #
+    # DESCRIPTION: Send a local file to the remote system using scp.  The file will be places in the 
+    #              specified destination path
+    #
+    #                 local_file - name of the local file name to be transferred
+    #                 dest_path  - path on the local/remote machine to place the transfer
+    #
     # #############################################################################################
     def put_file(self, local_file, dest_path="."):
+        """put_file(file, dest_path):
+           Send a local file to the remote system using scp.  The file will be places in the specified destination path
+              local_file - name of the local file name to be transferred
+              dest_path  - path on the local/remote machine to place the transfer
+              """
+   
         if getOpt('VERBOSE'):
             log("Sending local file " + local_file + " to " + self.ip + ":" + dest_path)
 
+        # test if we are local
         if not self.local:
-
+            # nope.. remote transfer
             if self.user == "root":
                 run=Popen(['scp', local_file, 'root@' + self.ip + ":" + dest_path], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             else:
                 run=Popen(['scp', local_file, self.user + '@' + self.ip + ":" + dest_path], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
         else:
+            # local transfer
             try:
                 run=Popen(['cp', local_file, dest_path], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             except (RuntimeError, TypeError, NameError):
@@ -467,6 +588,7 @@ class shell:
             
         run.wait()
             
+        # run as decode utf-8 for now.. may change later
         out = run.stdout.read().decode('utf-8')
         err = run.stderr.read().decode('utf-8')
 

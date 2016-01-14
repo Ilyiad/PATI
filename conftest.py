@@ -4,7 +4,8 @@
 # Copyright 2016, Dan Malone, All rights reserved
 #
 import util.globals
-import testlink
+import testlink.tltrack
+import control.netem
 
 #########################################################################################
 #
@@ -147,7 +148,7 @@ def pytest_runtest_makereport(item, call, __multicall__):
     # ################################
     # TESTLINK Reporting Setup (active by CLI Arg request only)
     # ################################
-    tl = testlink.tl_track()
+    tl = testlink.tltrack.tl_track()
     tl.tl_project    =  util.globals.getOpt('TESTLINK_PROJECT')
     tl.tl_platform   =  util.globals.getOpt('TESTLINK_PLATFORM')
     tl.tl_build      =  util.globals.getOpt('TESTLINK_BUILD')
