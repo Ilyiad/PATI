@@ -1,8 +1,12 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3.5
+
+#
+# Copyright 2016, Dan Malone, All Rights Reserved
+#
 import util.utilities
 from util.globals import *
 from util import *
-from control.shell import *
+import control
 
 import re
 import shlex
@@ -12,35 +16,47 @@ import atexit
 import inspect
 from time import sleep
 
-# We need the pandas package for calulating the EWMA except that pandas does not exist for python3 (sudo apt-get install python3-pandas)
-#import pandas 
-
 ###################################################################################################
-# class test_server
 #
-# This class manages a Test Server
-# The Test server can be stopped and started, the logging level changesd, and the logfile parsed
+# MODULE (Class): test_server
+#
+# DESCRIPTION   : This class manages a Test Server. The Test server can be stopped and started, 
+#                 the logging level changesd, and the logfile parsed.
+#
+# AUTHOR        : Dan Malone
+#
+# CREATED       : 01/13/16
 #
 # Usage:
 #
 # server = test_server.test_server(testbed, server_id)
 #             Where server_id is the id in the testbed of the server to manage
+#
 ##################################################################################################
-
 class test_server:
     """This class manages a dpr server on linux.  The Test server can be stopped and started, the logging level changesd, and the logfile parsed"""
 
     ##############################################################################################
-    # contstructor(testbed, server_id)
-    # server_id is the id in the testbed of the server to manage
+    #
+    # METHOD: __init__(testbed, netem_id, user_id)
+    #
+    # DESCRIPTION: This is the initialization constructor:
+    #                 testbed   - testbed descriptor .xml
+    #                 server_id - the id in the testbed of the server to manage
+    #                 user_id   - user id (root | <user>) from the testbed descriptor .xml
+    #
     ##############################################################################################
     def __init__(self, testbed, server_id=1, user_id=1):
-
+        """ __init__(testbed, netem_id, user_id)
+            This is the initialization constructor:
+               testbed   - testbed descriptor .xml
+               server_id - the id in the testbed of the server to manage
+               user_id   - user id (root | <user>) from the testbed descriptor .xml
+        """
         # Get the ip addresses out of the testbed
         self.testbed      = testbed
 
-        # 02/23/15 - DRM: To allow the root_username to be respected from the tbed cfg file
-        # we have to grab it, assign it to "user" then use it in place of hardcode "root"
+        # get the user in control
         self.user         = testbed.find(".//root_username[@id='" + str(user_id) + "']/name").text
 
         # set up test server esstials
@@ -53,10 +69,10 @@ class test_server:
         atexit.register(self.rm_tails)
 
         # We'll need a shell on the machine to manage it
-        self.shell = shell(self.control_ip, self.user)
+        self.shell = control.shell.shell(self.control_ip, self.user)
 
         # And a local shell file will be helpful
-        self.local_shell = shell("local", "")
+        self.local_shell = control.shell.shell("local", "")
 
     ##############################################################################################
     # start()
@@ -416,7 +432,7 @@ class test_server:
             tarfile_path = "proxy/server/ubuntu_x86_64/"
         elif os == "centos":
             tarfile_path = "proxy/server/centos_x86_64/"
-        install_file = utility.utilities.getbuild(build, tarfile_path + tarfile)
+        install_file = utilities.getbuild(build, tarfile_path + tarfile)
         
         # Peform the install
         log('DEBUG', "Installing " + install_file + " on DPR Server " + self.control_ip)

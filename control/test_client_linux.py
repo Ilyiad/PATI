@@ -7,7 +7,8 @@
 import util.utilities
 
 from util.globals import *
-from .shell import *
+from control import shell
+from control import netem
 
 import re
 import shlex
@@ -36,17 +37,23 @@ class test_client_linux:
     """This class manages a test client on linux.  The client program can be stopped and started and the client config can be changed"""
 
     ##############################################################################################
-    # contstructor(testbed, client_id, server_id)
-    # client_id is the id in the testbed for the client to manage
-    # server_id is the id in the testbed for the server that the client should connect to
+    #
+    # METHOD: __INIT__(testbed, client_id, server_id)
+    #
+    # DESCRIPTION: This is the initialization constructor:
+    #
+    #              testbed   - the testbed map as dictated by the .xml
+    #              client_id - the id in the testbed for the client to manage
+    #              server_id - the id in the testbed for the server that the client should connect to
+    #              user_id   - user (root | <user>) as directed in the testbed .xml
+    #
     ##############################################################################################
     def __init__(self, testbed, client_id, server_id, user_id):
 
         # Get the ip addresses out of the testbed
         self.testbed      = testbed
 
-        # 02/23/15 - DRM: To allow the root_username to be respected from the tbed cfg file
-        # we have to grab it, assign it to "user" then use it in place of hardcode "root"
+        # get the user in control
         self.user         = testbed.find(".//root_username[@id='" + str(user_id) + "']/name").text
 
         # set up test client essetials
@@ -58,7 +65,7 @@ class test_client_linux:
         self.time_started = 0
 
         # We'll need a shell on the client machine to manage it
-        self.shell = shell(self.control_ip, self.user)
+        self.shell = shell.shell(self.control_ip, self.user)
 
         # Get the current configuration
         self.defaultClientConfig = self.get_config()
@@ -69,24 +76,31 @@ class test_client_linux:
         self.server_data_ip     = testbed.find(".//test_server[@id='"     + str(server_id) + "']/ip").text
 
         # And a server shell so we can get this client's session id
-        self.server_shell = shell(self.server_control_ip, self.user)
+        self.server_shell = shell.shell(self.server_control_ip, self.user)
         
 
     ##############################################################################################
-    # set_default_config()
-    # Using the copy of proxy_local.conf that was saved during install, reset the client config
-    # Set the serverAddress in the config to the address of the test server
+    #
+    # METHOD: set_default_config()
+    #
+    # DESCRIPTION: TBD -
+    #              Set the serverAddress in the config to the address of the test server
+    #
     ##############################################################################################
     def set_default_config(self):
+        """set_default_config():
+           Using the copy of proxy_local.conf that was saved during install, reset the client config
+           Set the serverAddress in the config to the address of the test server
+           """
 
         log('DEBUG', "Resetting client config on " + self.control_ip)
 
         # proxy_local.conf
-        cmd = "sudo cp " +self.client_path+ "default.proxy_local.conf " +self.client_path+ "proxy_local.conf; sudo chmod ugo+w " +self.client_path+ "default.proxy_local.conf"
+        cmd = "cp " +self.client_path+ "default.proxy_local.conf " +self.client_path+ "proxy_local.conf; chmod ugo+w " +self.client_path+ "default.proxy_local.conf"
         self.shell.run(cmd)
 
         # profile.json
-        cmd = "if [ -f " +self.client_path+ "default.profile.json ]; then sudo cp " +self.client_path+ "default.profile.json " +self.client_path+ "profile.json; sudo chmod ugo+w " +self.client_path+ "default.profile.json; fi"
+        cmd = "if [ -f " +self.client_path+ "default.profile.json ]; then cp " +self.client_path+ "default.profile.json " +self.client_path+ "profile.json; chmod ugo+w " +self.client_path+ "default.profile.json; fi"
         self.shell.run(cmd)
         
         # Set this as the default configuration and the current configuration
@@ -97,6 +111,7 @@ class test_client_linux:
         profile = {}
         profile['client.serverAddress'] = self.server_data_ip
 
+        log(str(profile['client.serverAddress']))
         self.update_config(profile)
 
         # Now with the Test server address configured, set this as the new default configuration and the current configuration
@@ -233,7 +248,7 @@ class test_client_linux:
                                 self.configChanged = 1
                     
                             if self.configChanged:
-                                self.shell.run("sudo chmod 777 /usr/proxy_local/profile.json")
+                                self.shell.run("chmod 777 /usr/proxy_local/profile.json")
                                 with open('/usr/proxy_local/profile.json', 'w') as outfile:
                                     outfile.write(json.dumps(json_data, indent=4, sort_keys=True))
 
@@ -404,7 +419,7 @@ class test_client_linux:
 
         # if we select oldstyle that means modify all via proxy_local or ONLY the inclusions listed all else in json
         if oldcfg or ("serverAddress" in key or "proxyPort" in key or "nonDprProxyPort" in key or "networktype_key" in key or "networktype" in key):
-            cmd = "sudo sed -i '/zorcVersion/d' " +self.client_path+ "proxy_local.conf"
+            cmd = "sed -i '/zorcVersion/d' " +self.client_path+ "proxy_local.conf"
 
             log("REMOVING : " +str(cmd))
             #        cmd = "sed -i '\'s\/' +key+ '\' = ' +new_value+ '\' /'  + self.client_path + 'proxy_local.conf'
@@ -522,14 +537,14 @@ class test_client_linux:
         if teeout == 1:
             if nobuff:
                 # create command with explicit arguments and tee output we need it for examination within the run
-                cmd = "cd " + self.client_path + "; sudo stdbuf -oL ./proxy_local --proxyPort " + str(self.get_config('proxyPort')) + " --nonDprProxyPort " +  str(self.currentClientConfig['nonDprProxyPort'])+ " --profile /usr/proxy_local/profile.json &> proxy_loc." +str(self.control_ip)+ "-" +str(self.get_config('proxyPort'))+ ".log"
+                cmd = "cd " + self.client_path + "; stdbuf -oL ./proxy_local --proxyPort " + str(self.get_config('proxyPort')) + " --nonDprProxyPort " +  str(self.currentClientConfig['nonDprProxyPort'])+ " --profile /usr/proxy_local/profile.json &> proxy_loc." +str(self.control_ip)+ "-" +str(self.get_config('proxyPort'))+ ".log"
             else:
-                cmd = "cd " + self.client_path + "; sudo ./proxy_local --proxyPort " + str(self.get_config('proxyPort')) + " --nonDprProxyPort " +  str(self.currentClientConfig['nonDprProxyPort'])+ " --profile /usr/proxy_local/profile.json 1> proxy_loc." +str(self.control_ip)+ "-" +str(self.get_config('proxyPort'))+ ".log"
+                cmd = "cd " + self.client_path + "; ./proxy_local --proxyPort " + str(self.get_config('proxyPort')) + " --nonDprProxyPort " +  str(self.currentClientConfig['nonDprProxyPort'])+ " --profile /usr/proxy_local/profile.json 1> proxy_loc." +str(self.control_ip)+ "-" +str(self.get_config('proxyPort'))+ ".log"
 
             log("TEEING OUTPUT TO tee proxy_loc." +str(self.control_ip)+ ".log Client path: " +str(self.client_path))
         else:
             # create command with explicit arguments (as requested by Vitaliy.
-            cmd = "cd " + self.client_path + "; sudo ./proxy_local --proxyPort " + str(self.get_config('proxyPort')) + " --nonDprProxyPort " + str(self.currentClientConfig['nonDprProxyPort'])+ " --profile /usr/proxy_local/profile.json"
+            cmd = "cd " + self.client_path + "; ./proxy_local --proxyPort " + str(self.get_config('proxyPort')) + " --nonDprProxyPort " + str(self.currentClientConfig['nonDprProxyPort'])+ " --profile /usr/proxy_local/profile.json"
 
         # Sometimes the connect fails so retry.  We need to look into this
         for i in range(4):
@@ -576,7 +591,7 @@ class test_client_linux:
             # Get the session id from the server (it is the last id displayed in session detail)
             for i in range(3):
                 sleep(1)
-                output = self.server_shell.run("sudo service dpr_proxyd status detail")
+                output = self.server_shell.run("service dpr_proxyd status detail")
                 index = output.rfind("Session ")
                 if index == -1:
                     continue
@@ -640,7 +655,7 @@ class test_client_linux:
     # Stop all dpr clients on the remote system
     ##############################################################################################
     def stopall(self):
-        self.shell.run("sudo pkill proxy_local")
+        self.shell.run("pkill proxy_local")
         
 
     ##############################################################################################
@@ -697,7 +712,7 @@ class test_client_linux:
         else:
             tarfile_path = "proxy/client/ubuntu_x86_64/"
 
-        install_file = utility.utilities.getbuild(build, tarfile_path + tarfile)
+        install_file = utilities.getbuild(build, tarfile_path + tarfile)
         
         # Stop all instances of the client on that system
         self.stopall()
@@ -707,12 +722,12 @@ class test_client_linux:
         self.shell.put_file(install_file)
 
         # Untar it
-        self.shell.run("sudo rm -rf proxy_local")
+        self.shell.run("rm -rf proxy_local")
         self.shell.run("tar -xzf " + tarfile)
-        self.shell.run("sudo rm -rf /usr/proxy_local")
-        self.shell.run("sudo mv proxy_local /usr")
-        self.shell.run("sudo cp /usr/proxy_local/proxy_local.conf /usr/proxy_local/default.proxy_local.conf")
-        self.shell.run("if [ -f /usr/proxy_local/profile.json ]; then sudo cp /usr/proxy_local/profile.json /usr/proxy_local/default.profile.json; fi")
+        self.shell.run("rm -rf /usr/proxy_local")
+        self.shell.run("mv proxy_local /usr")
+        self.shell.run("cp /usr/proxy_local/proxy_local.conf /usr/proxy_local/default.proxy_local.conf")
+        self.shell.run("if [ -f /usr/proxy_local/profile.json ]; then cp /usr/proxy_local/profile.json /usr/proxy_local/default.profile.json; fi")
 
     #########################################################################
     # clear_netem()
