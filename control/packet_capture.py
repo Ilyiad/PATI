@@ -1,9 +1,12 @@
 #!/usr/local/bin/python3.5
 
-import utility.utilities
-from controller.shell import shell
+#
+# Copyright 2016, Dan Malone, All rights reserved
+#
+import util.utilities
+from control.shell import shell
 
-from utility.globals import log
+from util.globals import log
 
 import re
 import shlex
@@ -103,65 +106,65 @@ class packet_capture:
         self.prefix = prefix
 
         # server only
-        if options == "" or utility.utilities.getKey(options, "CAPTURE", "") == "server":
-            self.server_pcap     = self.run_tcpdump(self.server_shell, "server_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+        if options == "" or utilities.getKey(options, "CAPTURE", "") == "server":
+            self.server_pcap     = self.run_tcpdump(self.server_shell, "server_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
 
         # client only all interfaces
-        if options == "" or utility.utilities.getKey(options, "CAPTURE", "") == "client":
-            self.client_eth_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+        if options == "" or utilities.getKey(options, "CAPTURE", "") == "client":
+            self.client_eth_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
 
         # client only localhost
-        if options == "" or utility.utilities.getKey(options, "CAPTURE", "") == "client_loc":
+        if options == "" or utilities.getKey(options, "CAPTURE", "") == "client_loc":
             self.client_lo_pcap = self.run_tcpdump(self.client_shell, "client_" + prefix, "lo" , "all")
 
         # this is the garbage pail catch on all for the client
-        if utility.utilities.getKey(options, "CAPTURE", "") == "cli_all":
-            self.client_all_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
-            self.client_lo_pcap = self.run_tcpdump(self.client_shell, "client_" + prefix, "lo" , str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+        if utilities.getKey(options, "CAPTURE", "") == "cli_all":
+            self.client_all_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
+            self.client_lo_pcap = self.run_tcpdump(self.client_shell, "client_" + prefix, "lo" , str(utilities.getKey(options, "CAPTURE_PORT", "all")))
 
         # Server and Client (upload). Note: tcpdump.stop is order of start based, for upload we want the server to start first
-        if options == "" or utility.utilities.getKey(options, "CAPTURE", "") == "up_srvcli":
+        if options == "" or utilities.getKey(options, "CAPTURE", "") == "up_srvcli":
             # check and see if a specific ethernet intf (in this case we want the upload intf) was passed in,
             # can be eth, p<n>p<n> (ex: p1p1) or a em prefixed then it becomes a specific directed tcpdump
-            if 'eth' in utility.utilities.getKey(options, "SERVETH", "") or "p" in utility.utilities.getKey(options, "SERVETH", "") or "em" in utility.utilities.getKey(options, "SERVETH", "") :
+            if 'eth' in utilities.getKey(options, "SERVETH", "") or "p" in utilities.getKey(options, "SERVETH", "") or "em" in utilities.getKey(options, "SERVETH", "") :
                 # it is make it part of the dumpline
-                self.server_pcap      = self.run_tcpdump(self.server_shell, "server_" + prefix, str(utility.utilities.getKey(options, "SERVETH", "")), str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+                self.server_pcap      = self.run_tcpdump(self.server_shell, "server_" + prefix, str(utilities.getKey(options, "SERVETH", "")), str(utilities.getKey(options, "CAPTURE_PORT", "all")))
             else:
                 # generic all intf
-                self.server_pcap      = self.run_tcpdump(self.server_shell, "server_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+                self.server_pcap      = self.run_tcpdump(self.server_shell, "server_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
 
             # start the client tcpdump
-            self.client_eth_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+            self.client_eth_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
             return
         
         # Client and Server (download). Note: tcpdump.stop is order of start based, for download we want the client to start first
-        if options == "" or utility.utilities.getKey(options, "CAPTURE", "") == "dn_clisrv":
+        if options == "" or utilities.getKey(options, "CAPTURE", "") == "dn_clisrv":
             
             # start the client tcpdump
-            self.client_eth_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+            self.client_eth_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
 
             # check and see if a specific ethernet intf (in this case we want the dnload intf) was passed in,
             # can be eth, p<n>p<n> (ex: p1p1) or a em prefixed then it becomes a specific directed tcpdump
-            if 'eth' in utility.utilities.getKey(options, "SERVETH", "") or "p" in utility.utilities.getKey(options, "SERVETH", "") or "em" in utility.utilities.getKey(options, "SERVETH", "") :
-                self.server_pcap      = self.run_tcpdump(self.server_shell, "server_" + prefix, str(utility.utilities.getKey(options, "SERVETH", "")), str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+            if 'eth' in utilities.getKey(options, "SERVETH", "") or "p" in utilities.getKey(options, "SERVETH", "") or "em" in utilities.getKey(options, "SERVETH", "") :
+                self.server_pcap      = self.run_tcpdump(self.server_shell, "server_" + prefix, str(utilities.getKey(options, "SERVETH", "")), str(utilities.getKey(options, "CAPTURE_PORT", "all")))
             else:
                 # generic all intf
-                self.server_pcap  = self.run_tcpdump(self.client_shell, "server_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+                self.server_pcap  = self.run_tcpdump(self.client_shell, "server_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
             return
 
         # this will take a list of directed client interfaces ( data and control ) as well as local incase there is multile on the clioent sderver
-        if 'eth' in utility.utilities.getKey(options, "CAPTURE", "") or "p" in utility.utilities.getKey(options, "CAPTURE", "") or "em" in utility.utilities.getKey(options, "CAPTURE", "") :
-            log("OUTPUT : " +str(utility.utilities.getKey(options, "CAPTURE", "")))
-            temp = utility.utilities.getKey(options, "CAPTURE", "")
+        if 'eth' in utilities.getKey(options, "CAPTURE", "") or "p" in utilities.getKey(options, "CAPTURE", "") or "em" in utilities.getKey(options, "CAPTURE", "") :
+            log("OUTPUT : " +str(utilities.getKey(options, "CAPTURE", "")))
+            temp = utilities.getKey(options, "CAPTURE", "")
             intf_list = temp.split("-")
             self.client_data_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, intf_list[0], "all")
             self.client_ctrl_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, intf_list[1], "all")
-            self.client_lo_pcap    = self.run_tcpdump(self.client_shell, "client_" + prefix, "lo" , str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+            self.client_lo_pcap    = self.run_tcpdump(self.client_shell, "client_" + prefix, "lo" , str(utilities.getKey(options, "CAPTURE_PORT", "all")))
 
         # this is the default.. just catch all client server
-        if "ClientServer" in utility.utilities.getKey(options, "CAPTURE", ""):
-            self.server_pcap  = self.run_tcpdump(self.server_shell, "server_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
-            self.client_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utility.utilities.getKey(options, "CAPTURE_PORT", "all")))
+        if "ClientServer" in utilities.getKey(options, "CAPTURE", ""):
+            self.server_pcap  = self.run_tcpdump(self.server_shell, "server_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
+            self.client_pcap  = self.run_tcpdump(self.client_shell, "client_" + prefix, "all", str(utilities.getKey(options, "CAPTURE_PORT", "all")))
  
 
         # NOTE_TO_SELF: add cdn combos as well and redo this.
@@ -182,7 +185,7 @@ class packet_capture:
                            Return the text file name
                            """
                            
-        outfile = utility.utilities.snip(pcap, 0, ".pcap") + ".tshark"
+        outfile = utilities.snip(pcap, 0, ".pcap") + ".tshark"
         self.local_shell.run("tshark -r " + pcap + " > " + outfile, 0)
         return outfile
         

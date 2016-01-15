@@ -126,7 +126,7 @@ class transfer:
 
         defaults['OUTFILE']  = "";   # Name of output file.  If "", output file will be given a name containing the transfer session id
 
-        options = utility.utilities.set_dictionary_defaults(defaults, options)
+        options = utilities.set_dictionary_defaults(defaults, options)
 
         # Prepend the content server if there is not already a content server on it
         self.transfer_filenames = []
@@ -252,7 +252,7 @@ class transferThread(threading.Thread):
         self.data = {}
         self.stop_transfer = 0
         self.transfer_running = 1
-        self.thread_name = utility.utilities.snip(str(self), "(", ",")
+        self.thread_name = utilities.snip(str(self), "(", ",")
         try:
             self.count = options['COUNT']
         except:
@@ -351,7 +351,7 @@ class transferThread(threading.Thread):
                 log('DEBUG', "Transfer" + self.thread_name + ":" + str(self.transfer_id) + " ended \nLOCAL FILE: " + str(outfiles) + "\nCURL OUTPUT:\n" + output)
 
             # Parse the output for errors
-            errmsg = utility.utilities.snip(output, "curl: ")
+            errmsg = utilities.snip(output, "curl: ")
 
             # Get each stat line
             lines = output.split("\r")
@@ -401,10 +401,10 @@ class transferThread(threading.Thread):
                                     stats["avg_dload"] = stats["avg_dload"] + "B"
                                     unit = "B"
 
-                                avg_dload = utility.utilities.snip(stats["avg_dload"], 0, unit)
+                                avg_dload = utilities.snip(stats["avg_dload"], 0, unit)
 
                                 # There appears to be a bug in Python where sometimes a string like "13.8" 
-                                # when passed to float has unseen garbage.  Maybe it's a fault of utility.utilities.snip
+                                # when passed to float has unseen garbage.  Maybe it's a fault of utilities.snip
                                 # Anyway, reassigning the variable seems to clean up the garbage
                                 if avg_dload == "":
                                     avg_dload = 0
@@ -437,10 +437,10 @@ class transferThread(threading.Thread):
                                     stats["avg_uload"] = stats["avg_uload"] + "B"
                                     unit = "B"
 
-                                avg_uload = utility.utilities.snip(stats["avg_uload"], 0, unit)
+                                avg_uload = utilities.snip(stats["avg_uload"], 0, unit)
 
                                 # There appears to be a bug in Python where sometimes a string like "13.8" 
-                                # when passed to float has unseen garbage.  Maybe it's a fault of utility.utilities.snip
+                                # when passed to float has unseen garbage.  Maybe it's a fault of utilities.snip
                                 # Anyway, reassigning the variable seems to clean up the garbage
                                 x = avg_uload
 

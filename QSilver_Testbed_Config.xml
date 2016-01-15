@@ -30,7 +30,7 @@
 	<control_client id="1">
             <ip>192.168.0.108</ip>
             <os>linux</os>
-	    <path>/home/projects/PATI</path>
+	    <path>/home/projects/PATI/</path>
         </control_client>
 	<control_client id="2">
             <ip>192.168.13.207</ip>
